@@ -9,7 +9,6 @@ ancientdict = {
 }
 dict_in = open("ancientdict.pickle", "rb")
 ancientdict = pickle.load(dict_in)
-print(ancientdict)
 def backuprecords():
     dict_out = open("ancientdict.pickle","wb")
     pickle.dump(ancientdict, dict_out)
@@ -26,7 +25,7 @@ async def user_metrics_background_task():
     await client.wait_until_ready()
     while not client.is_closed():
         try:
-            backuprecords
+            backuprecords()
             await asyncio.sleep(30)
         except Exception as e:
             print(str(e))
@@ -59,9 +58,9 @@ async def on_message(message): #The main bot functions
     elif message.content.startswith("!"):
         split_argsl = args["content"][1:].lower().split()
         six_call = " ".join((args["content"].lower().split())[1:2])
-        if split_argsl[0] == "t":
-            split_argst = split_argsl[1:]
-            split_args = " ".joint(split_argst)
+        if split_argsl[0][0] == "t":
+            split_argst = args["content"][1:].split()
+            split_args = " ".join(split_argst[1:])
         else:
             if len(split_argsl) == 1:
                 split_argsl.append("null")
@@ -84,30 +83,33 @@ async def on_message(message): #The main bot functions
                 elif cntr == num_roles:
                     await message.channel.send("Sorry, only a Primary User can kill me!")
         #translate command
-        elif cmd == "teta" or cmd == "tawte" or cmd == "taste":
-            if cmd == "teta": #for english
-                print(split_args)
-                if split_args in ancientdict:
-                    drawanc(ancientdict[split_args][1])
-                    if ancientdict[split_args][2] == "":
-                        await message.channel.send(file=discord.File("ancient.png"), content = "I believe \"" + split_args + "\" was written...")
+        elif cmd == "teta" or cmd == "tate":
+            if split_args != "":
+                if cmd == "teta": #for english
+                    if split_args in ancientdict:
+                        drawanc((ancientdict[split_args])[0])
+                        if (ancientdict[split_args])[1] == "":
+                            await message.channel.send(file=discord.File("ancient.png"), content = "I believe \"" + split_args + "\" was written...")
+                        else:
+                            await message.channel.send(file=discord.File("ancient.png"), content = "I believe \"" + split_args + "\" translates to \"" + (ancientdict[split_args])[1] + "\", and was written...")
                     else:
-                        await message.channel.send(file=discord.File("ancient.png"), content = "I believe \"" + split_args + "\" translates to " + ancientdict[split_args][2] + ", and was written...")
-                else:
-                    await message.channel.send("I am sorry mistress, I am afraid I do not know that translation.")
-            elif cmd == "tawte": #for ancient symbols
-                if get_key(split_args) != -1:
-                    drawanc(split_args)
-                    if ancientdict[get_key(split_args)][2] == "":
-                        await message.channel.send(file=discord.File("ancient.png"), content = "I believe \"" + get_key(split_args) + "\" is the translation of...")
+                        await message.channel.send("I am sorry mistress, I am afraid I do not know that translation.")
+                elif cmd == "tate": #for ancient symbols
+                    if get_key(split_args) != -1:
+                        if ancientdict[get_key(split_args)].index(split_args) == 0:
+                            drawanc(split_args)
+                            if ancientdict[get_key(split_args)][1] == "":
+                                await message.channel.send(file=discord.File("ancient.png"), content = "I believe...")
+                                await message.channel.send("...translates as \"" + get_key(split_args) + "\"."
+                            else:
+                                await message.channel.send(file=discord.File("ancient.png"), content = "I believe \"" + get_key(split_args) + "\" is the translation of, \"" + ancientdict[get_key(split_args)][1] + "\" or...")
+                        else:
+                            drawanc(ancientdict[get_key(split_args)][0])
+                            await message.channel.send(file=discord.File("ancient.png"), content = "I believe \"" + get_key(split_args) + "\" is the translation of, \"" + split_args + "\" or...")
                     else:
-                        await message.channel.send(file=discord.File("ancient.png"), content = "I believe \"" + get_key(split_args) + "\" is the translation of, \"" + ancientdict[get_key(split_args)][2] + "\" or...")
-                else:
-                    await message.channel.send("I am sorry mistress, I am afraid I am not familiar with that.")
-            elif cmd == "taste": #for ancient words
-                if get_key(split_args) != -1:
-                    drawanc(ancientdict[get_key(split_args)][1])
-                    await message.channel.send(file=discord.File("ancient.png"), content = "I believe \"" + get_key(split_args) + "\" is the translation of, \"" + split_args + "\" or...")
+                        await message.channel.send("I am sorry mistress, I am afraid I am not familiar with aspect of the ancient language.")
+            else:
+                await message.channel.send("Mistress, I need to know *what* you want to translate...")
         #longform translate command
     #     elif six_call == "six translate":
     #         if split_argsl[1] == "word":
@@ -235,7 +237,7 @@ async def on_message(message): #The main bot functions
     # elif args["content"].lower().startswith("hey six") or args["content"].lower().startswith("six"):
     #     await message.channel.send(ProcessNameCall(args))
     # elif args["content"].lower().startswith("hey enkei") or args["content"].lower().startswith("enkei"):
-        await message.channel.send(ProcessNameCallEnkei(args))
+    #    await message.channel.send(ProcessNameCallEnkei(args))
 
 def trim(im): #tirms whitespace from image
     bg = Image.new(im.mode, im.size, im.getpixel((0,0)))

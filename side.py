@@ -1,14 +1,15 @@
 import pickle
 ancientdict = {
-    "I":["r.1",""]
 }
+dict_in = open("ancientdict.pickle", "rb")
+ancientdict = pickle.load(dict_in)
 
-# def backuprecords():
-#     dict_out = open("ancientdict.pickle","wb")
-#     pickle.dump(ancientdict, dict_out)
-#     dict_out.close()
+ancientdict["I"]=["r.1","yauki"]
+ancientdict["Heaven's Vault"]=["""'u.)hi "sii""","Bo-cataliti ifarali"]
 
-# backuprecords()
+def backuprecords():
+    dict_out = open("ancientdict.pickle","wb")
+    pickle.dump(ancientdict, dict_out)
+    dict_out.close()
 
-if "I" in ancientdict:
-    print("yay")
+backuprecords()
