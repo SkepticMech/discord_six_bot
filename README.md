@@ -6,25 +6,25 @@ Python implementation of a combination translation/dictionary monitoring bot for
 
 !Add word/phrase english _ ancient
 	
-	creates new record in the dictionary
+	Creates new record in the dictionary
 	
 !Update word/phrase english _ ancient
 	
-	modifies an existing dictionary reference
+	Modifies an existing dictionary reference
 	
 !Remove word/phrase english _ ancient (the ancient isn't actually checked, it can be random)
 	
-	removes specified dictionary reference
+	Removes specified dictionary reference
 	
-!translate word/phrase english
+!teta
 	
-	conversts kown english into ancient script
+	Translates english into ancient script and speech if known
 	
-!invtranslate word/phrase ancient
+!tate
 	
-	provides english equivalent for known ancient
+	Translates Ancient script or speech to English
 	
 !Kill
 	
-	terminates the bot, only usable for Primary User role
-	does not imact dictionary records
+	Terminates the bot, only usable for Primary User role
+	does not imact dictionary records (if running on local device)
