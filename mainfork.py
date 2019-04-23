@@ -74,8 +74,13 @@ async def on_message(message): #The main bot functions
                     await message.channel.send("Sorry, only a Primary User can kill me!")
         #create image of text
         elif cmd == "draw":
-          drawanc(split_args)
-          await message.channel.send(file=discord.File("ancient.png"))
+            split_argsl = args["content"][1:].lower().split()
+            if len(split_argsl) == 1:
+                split_argsl.append("null")
+            split_argst = args["content"][1:].split()
+            split_args = " ".join(split_argst[1:])
+            drawanc(split_args)
+            await message.channel.send(file=discord.File("ancient.png"))
         #translate command
         elif cmd == "tmta" or cmd == "tatm":
             rep = translate(args)
@@ -126,41 +131,6 @@ async def on_message(message): #The main bot functions
                 channel = rep.chn
                 await channel.send(rep.str3)
 
-    #     if cmd == "remove":
-    #         if str(args["channel"]) == "archive":
-    #             if "_" in split_argst:
-    #                 brk = split_argst.index("_")
-    #                 engl = " ".join(split_argst[2:brk])
-    #                 anch = " ".join(split_argst[(brk+1):])
-    #                 guild = args["guild"]
-    #                 channel = discord.utils.get(guild.text_channels, name='general')
-    #                 await message.channel.send("Checking Update...")
-    #                 if split_argsl[1] == "word":
-    #                     if len(split_argst) > 5 :
-    #                         await message.channel.send("This seems to be a phrase, not a word.")
-    #                     elif engl not in wordlist:
-    #                         await message.channel.send("This entry does not exist.")
-    #                     else:
-    #                         drawanc(wordlist[engl])
-    #                         await message.channel.send(file=discord.File("ancient.png"), content = "Entry Removed:\n" + engl + ":\n")
-    #                         await channel.send('Translation removed by ' + str(message.author.display_name))
-    #                         wordlist.pop(engl)
-    #                         inv_wordlist.pop(anch)                            # await client.wait_for('message', backupwords=backupwords)
-    #                 if split_argsl[1] == "phrase":
-    #                     if len(split_argst) < 6 :
-    #                         await message.channel.send("This seems to be a word, not a phrase.")
-    #                     elif engl not in phraselist:
-    #                         await message.channel.send("This entry does not exist.")
-    #                     else:
-    #                         drawanc(phraselist[engl])
-    #                         await message.channel.send(file=discord.File("ancient.png"), content = "Entry Removed:\n" + engl + ":\n")
-    #                         await channel.send('Translation removed by ' + str(message.author.display_name))
-    #                         phraselist.pop(engl)
-    #                         inv_phraselist.pop(anch)                            # await client.wait_for('message', backupphrases=backupphrases)
-    #             else:
-    #                 await message.channel.send("Invalid format, missing : character")
-    #         else:
-    #             await message.channel.send("Translation updates are only accepted in the archive channel.")
         
     elif args["content"].lower().startswith("hey six") or args["content"].lower().startswith("six"):
         rep = six_call(args)
