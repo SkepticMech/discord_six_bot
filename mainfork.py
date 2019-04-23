@@ -1,39 +1,13 @@
-import discord
-import random
-import os
-import pickle
-import asyncio
+import discord, random, os, pickle, asyncio, csv, time, atexit
 from PIL import Image, ImageDraw, ImageFont, ImageChops
+from apscheduler.schedulers.background import BackgroundScheduler
+from keep_alive import keep_alive
 
 ancientdict = {
 }
 dict_in = open("ancientdict.pickle", "rb")
 ancientdict = pickle.load(dict_in)
-def backuprecords():
-    dict_out = open("ancientdict.pickle","wb")
-    pickle.dump(ancientdict, dict_out)
-    dict_out.close()
 
-def get_key(val): 
-    for key, value in ancientdict.items(): 
-         if val in value: 
-             return key 
-
-    return -1
-
-async def user_metrics_background_task():
-    await client.wait_until_ready()
-    while not client.is_closed():
-        try:
-            backuprecords()
-            await asyncio.sleep(30)
-        except Exception as e:
-            print(str(e))
-            await asyncio.sleep(30)   
-
-
-prefix = "define"
-cmd_prefix = "!"
 admin_privliged_role = "Primary User"
 
 client=discord.Client()
@@ -88,7 +62,7 @@ async def on_message(message): #The main bot functions
                 await message.channel.send(file=discord.File("ancient.png"), content = rep.str1)
             elif rep.x == 2:
                 await message.channel.send(file=discord.File("ancient.png"), content = rep.str1)
-                await message.channel.send(rep.str1)
+                await message.channel.send(rep.str2)
             else:
                 await message.channel.send(rep.str1)
         #add to dictionary command
@@ -130,8 +104,20 @@ async def on_message(message): #The main bot functions
                 await message.channel.send(rep.str2)
                 channel = rep.chn
                 await channel.send(rep.str3)
-
-        
+        elif cmd == "export":
+            if str(args["channel"]) == "archive":
+                csvexp(1)
+                await message.channel.send(file=discord.File("Ancient_Dictionary.csv"))
+                await message.channel.send(file=discord.File("AD_for_import.csv"))
+            else:
+                await message.channel.send("The dictionary may only be retrieved from the Archive.")
+        elif cmd == "import":
+            if str(args["channel"]) == "archive":
+                ancientdict == csvimp()
+                await message.channel.send("Dictionary Imported.")
+            else:
+                await message.channel.send("Dictionary encoding may only be performed in the Archive.")                
+    #Six and Enkei Interaction informal commands 
     elif args["content"].lower().startswith("hey six") or args["content"].lower().startswith("six"):
         rep = six_call(args)
         if rep.str1 != "":
@@ -153,6 +139,50 @@ async def on_message(message): #The main bot functions
                 await message.channel.send(rep.str1)
     elif args["content"].lower().startswith("hey enkei") or args["content"].lower().startswith("enkei"):
        await message.channel.send(enkei_call(args))
+
+def backuprecords(): #export dictionary to pickle backup file
+    dict_out = open("ancientdict.pickle","wb")
+    pickle.dump(ancientdict, dict_out)
+    dict_out.close()
+
+def csvexp(all = 0):
+    holder = []
+    for word in ancientdict.keys():
+        holder.append({"Modern Word" : word, "Ancient Script" : (ancientdict[word])[0], "Ancient Word" : (ancientdict[word])[1]})
+    csv_columns = ["Modern Word","Ancient Script", "Ancient Word"]
+    try:
+        with open("AD_for_import.csv", 'w', newline='') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=csv_columns, delimiter="|", quotechar="'")
+            writer.writeheader()
+            writer.writerows(holder)
+    except IOError:
+        print("I/O error")
+    if all == 1:
+        try:
+            with open("Ancient_Dictionary.csv", 'w', newline='') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
+                writer.writeheader()
+                writer.writerows(holder)
+        except IOError:
+            print("I/O error")
+
+def csvimp():
+    ancientdict = None
+    ancientdict = {}
+    try:
+        with open("AD_for_import.csv", "r", newline="") as csvfile:
+            reader = csv.DictReader(csvfile, delimiter="|", quotechar="'")
+            for row in reader:
+                ancientdict[row["Modern Word"]]=[row["Ancient Script"], row["Ancient Word"]]
+    except IOError:
+        print("I/O error")
+    return ancientdict
+
+def get_key(val): #find key in dictionary from one of the values in its list
+    for key, value in ancientdict.items(): 
+         if val in value: 
+             return key 
+    return -1
 
 def trim(im): #tirms whitespace from image
     bg = Image.new(im.mode, im.size, im.getpixel((0,0)))
@@ -362,6 +392,7 @@ def addword(args): #function to enable addtion to dictionary
                         dictout.str2 = "Entry Added:\n\"" + engl + "\", written...\n"
                     dictout.str3 = "New dictionary submission from " + args["name"]
                     ancientdict[engl] = [anchr,anchs]
+                    backuprecords()
             else:
                 dictout.str1 = "Invalid format. Please provide the translation"
         else:
@@ -407,6 +438,7 @@ def updatedict(args): #function to edit a dictionary entry
                         dictout.str2 = "Entry Changed:\n\"" + engl + "\", written...\n"
                     dictout.str3 = "New translation update by " + args["name"]
                     ancientdict[engl] = [anchr,anchs]
+                    backuprecords()
             else:
                 dictout.str1 = "Invalid format. Please provide the translation"
         else:
@@ -425,7 +457,6 @@ def censordict(args): #function to remove a dictionary entry
         split_argst.append("")
     if str(args["channel"]) == "archive":
         engl = " ".join(split_argst[1:])
-        print(engl)
         if engl == "":
             dictout.str1 = "Invalid format. Please provide the entry to be removed."
         else:
@@ -440,14 +471,16 @@ def censordict(args): #function to remove a dictionary entry
                 dictout.str2 = "Entry Removed:\n\"" + engl + "\""
                 dictout.str3 = "Dictionary entry removed by " + args["name"]
                 ancientdict.pop(engl)
+                backuprecords()
     else:
         dictout.str1 = "Translation removal is allowed in the archive channel."
     return dictout
 
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=csvexp, trigger="interval", hours=1)
+scheduler.start()
+# Shut down the scheduler when exiting the app
+atexit.register(lambda: scheduler.shutdown())
 
-
-
-
-# client.loop.create_task(user_metrics_background_task())
 client.run("NTY5Mzk4OTE0NjQ2NTQwMzIz.XLwEhQ.Dw8US4osHL5FPSf6PN6YYoovGvs") #SHOP
 # client.run("NTY5MzgxOTk4NDMxNTY3ODcy.XLv0fA.U6UVquCagOzgl4eXkwi5cB05YMU") #LANG CLUB
