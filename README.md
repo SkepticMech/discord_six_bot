@@ -1,23 +1,40 @@
 # discord_six_bot
 Python implementation of a combination translation/dictionary monitoring bot for discord designed for the Heaven's Vault conlang
 
-# Active Commands
-!teta
+
+# Server-wide Commands
+
+!tmta modern word or phrase
 	
-	Translates english into ancient script and speech if known	
-!tate
+	converts known English into ancient script
 	
-	Translates Ancient script or speech to English
-!Add word/phrase english _ ancient
+!tatm ancient word or phrase
 	
-	Creates new record in the dictionary	
-!Update word/phrase english _ ancient
+	provides english equivalent for known ancient - use !tmtaf to list all known synonyms if any exist
+
+!draw glyphs
 	
-	Modifies an existing dictionary reference	
-!Remove word/phrase english _ ancient (the ancient isn't actually checked, it can be random)
+	produces a png of the glyphs for confirmation and/or external use
+
+All the above commands can have "w" appended to them to change the font color of the ancient glyphs to white (ie !draww)
+
+!kill
 	
-	Removes specified dictionary reference	
-!Kill
+	terminates the bot, only usable for Primary User role
+	does not impact dictionary records
+
+Various easter egg commands from talking to Six
+
+# Archive Channel Only Commands
+
+!Add modern _ ancient glyphs _ spoken ancient
 	
-	Terminates the bot, only usable for Primary User role
-	does not imact dictionary records (if running on local device)
+	creates new record in the dictionary, everything after the ancient glyphs can be left off if the spoken form is not known
+	
+!Update modern _ ancient glyphs _ spoken ancient
+	
+	modifies an existing dictionary reference, everything after the ancient glyphs can be left off if the spoken form is not known
+	
+!Remove modern
+	
+	removes specified dictionary reference
