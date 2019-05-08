@@ -38,3 +38,11 @@ Various easter egg commands from talking to Six
 !Remove modern
 	
 	removes specified dictionary reference
+	
+!export
+	
+	forces the .csv backup files to be generated and provided as attachements
+
+!import
+	
+	reloads the active dictionary from the .csv backup. If used as a comment when uploading a .csv file of the correct format it will add any new extries to the existing dictionary
