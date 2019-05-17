@@ -1,4 +1,4 @@
-import discord, random, pickle, asyncio, csv, time, atexit, requests
+import discord, random, pickle, asyncio, csv, time, atexit, requests, re
 from PIL import Image, ImageDraw, ImageFont, ImageChops
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -14,14 +14,41 @@ memo = {
 memo_in = open("memos.pickle", "rb")
 memo = pickle.load(memo_in)
 
+scores = {
+    "nul" : [0,0,0]
+}
+
+score_in = open("scores.pickle", "rb")
+scores = pickle.load(score_in)
+
 
 admin_privliged_role = "Primary User"
+role1 = "Archivist"
+role2 = "Scribe"
+role3 = "Explorer"
+
+rank1 = 0
+rank2 = 0
+rank3 = 0
+
+scorelims = [100,100,100]
 
 client=discord.Client()
 
 @client.event  # event decorator/wrapper
 async def on_ready():
+    global role1, role2, role3
+    global rank1, rank2, rank3
     print(f"I have logged in as {client.user}")
+    thisguild = client.guilds[0]
+    allroles = thisguild.roles
+    for item in allroles:
+        if item.name == role1:
+            rank1 = item
+        elif item.name == role2:
+            rank2 = item
+        elif item.name == role3:
+            rank3 = item
 
 @client.event
 async def on_message(message): #The main bot functions
@@ -48,7 +75,7 @@ async def on_message(message): #The main bot functions
             cntr = 0
             for item in roles:
                 allowed_role = str(item)
-                cntr  = cntr + 1
+                cntr  += 1
                 if allowed_role == admin_privliged_role:
                     await client.close()
                 elif cntr == num_roles:
@@ -62,6 +89,7 @@ async def on_message(message): #The main bot functions
             split_args = " ".join(split_argst[1:])
             drawanc(split_args)
             await message.channel.send(file=discord.File("ancient.png"))
+            await change_roles(args,updatescore(args, scoregroup(trn = 1)))
         elif cmd == "draww":
             split_argsl = args["content"][1:].lower().split()
             if len(split_argsl) == 1:
@@ -70,6 +98,7 @@ async def on_message(message): #The main bot functions
             split_args = " ".join(split_argst[1:])
             drawanc(split_args, 1)
             await message.channel.send(file=discord.File("ancient.png"))
+            await change_roles(args,updatescore(args, scoregroup(trn = 1)))
         #translate command
         elif cmd in ["tmta","tatm","tmtaw","tatmw","tatmf","tatmfw"]:
             wht = 0
@@ -83,6 +112,7 @@ async def on_message(message): #The main bot functions
                 await message.channel.send(rep.str2)
             else:
                 await message.channel.send(rep.str1)
+            await change_roles(args,updatescore(args, scoregroup(trn = 1)))
         #add to dictionary command
         elif cmd == "add":
             rep = addword(args)
@@ -90,6 +120,7 @@ async def on_message(message): #The main bot functions
                 await message.channel.send(rep.str1)
             elif rep.x == 1:
                 await message.channel.send(file=discord.File("ancient.png"), content = rep.str1)
+                await change_roles(args,updatescore(args, scoregroup(dic = 5)))
         #modify dictionary command
         elif cmd == "update":
             rep = updatedict(args)
@@ -97,6 +128,7 @@ async def on_message(message): #The main bot functions
                 await message.channel.send(rep.str1)
             elif rep.x == 1:
                 await message.channel.send(file=discord.File("ancient.png"), content = rep.str1)
+                await change_roles(args,updatescore(args, scoregroup(dic = 2)))
         #remove dictionary entry command
         elif cmd == "remove":
             rep = censordict(args)
@@ -121,8 +153,20 @@ async def on_message(message): #The main bot functions
                     impnew.repl = 1
                 impnew = csvimp(impnew)
                 await message.channel.send(impnew.str1)
+                if impnew.ata == 1 and impnew.err == 0:
+                    await change_roles(args,updatescore(args, scoregroup(dic = 50)))
             else:
                 await message.channel.send("Dictionary encoding may only be performed in the Archive.") 
+        elif cmd == "roll":
+            result = diceroll(args["content"])
+            if result != "error":
+                await message.channel.send(result)
+                await change_roles(args,updatescore(args, scoregroup(egg = 1)))
+            else:
+                await message.channel.send("I am sorry mistress, I do not recognize the format of your request.")
+        elif cmd == "fireball":
+            await message.channel.send(diceroll("roll 8d6") + " fire damage")
+            await change_roles(args,updatescore(args, scoregroup(egg = 1)))
     #Six and Enkei Interaction informal commands 
     elif args["content"].lower().startswith(("hey six","hey, six","six")):
         rep = six_call(args)
@@ -130,17 +174,20 @@ async def on_message(message): #The main bot functions
             if rep.x == 1:
                 if rep.var == 0:
                     await message.channel.send(file=discord.File("ancient.png"), content = rep.str1)
+                    await change_roles(args,updatescore(args, scoregroup(trn = 1)))
                 else:
                     await message.channel.send(rep.str1)
             elif rep.x == 2:
                 await message.channel.send(file=discord.File("ancient.png"), content = rep.str1)
                 await message.channel.send(rep.str2)
+                await change_roles(args,updatescore(args, scoregroup(trn = 1)))
             elif rep.x == 3:
                 await message.channel.send(rep.str1)
                 await asyncio.sleep(3)
                 await message.channel.send(rep.str2)
                 await asyncio.sleep(3)
                 await message.channel.send(rep.str3)
+                await change_roles(args,updatescore(args, scoregroup(egg = 2)))
             elif rep.x == 4:
                 await message.channel.send(rep.str1)
                 await asyncio.sleep(2)
@@ -155,11 +202,75 @@ async def on_message(message): #The main bot functions
                 await message.channel.send("Vaulting...")
                 await asyncio.sleep(3)
                 await message.channel.send("Error: Insufficient Power")
+                await change_roles(args,updatescore(args, scoregroup(egg = 5)))
             else:
                 await message.channel.send(rep.str1)
     elif args["content"].lower().startswith(("hey enkei","enkei")):
        await message.channel.send(enkei_call(args))
+       await change_roles(args,updatescore(args, scoregroup(egg = 1)))
 
+async def change_roles(args, chngs):
+    whois = args["user"]
+    if chngs.rem == 0:
+        await whois.add_roles(chngs.id1)
+    if chngs.rem == 1:
+        await whois.add_roles(chngs.id1)
+        await whois.remove_roles(chngs.id2)
+
+# Assorted Class Deffinitions, largely single use
+class impdata:
+    def __init__(self):
+        self.ata = 0
+        self.refloc = ""
+        self.repl = 0
+        self.str1 = "no message"
+        self.str2 = ""
+        self.x = 0
+        self.err = 0
+
+class getkey:
+    def __init__(self):
+        self.key = -1
+        self.mlt = 0
+
+class transout:
+    def __init__(self): 
+        self.str1 = ""
+        self.str2 = ""
+        self.x = 0
+
+class sixoutcl:
+    def __init__(self): 
+        self.str1 = ""
+        self.str2 = ""
+        self.str3 = ""
+        self.x = 0
+        self.var = 0 
+
+class dictoutcl:
+    def __init__(self):
+        self.chn = 0
+        self.str1 = ""
+        self.str2 = ""
+        self.str3 = ""
+        self.x = 0
+
+class scoregroup():
+    def __init__(self, dic = 0, trn = 0, egg = 0):
+        self.dics = dic
+        self.trns = trn
+        self.eggs = egg
+
+class rankchange():
+    def __init__(self, rolist, rems):
+        self.id1 = 0
+        self.id2 = 0
+        self.fin = 0
+        self.rem = rems
+        self.roles = rolist
+        self.num_roles = len(rolist)
+
+# Minor repeated use functions
 def backuprecords(): #export dictionary to pickle backup file
     dict_out = open("ancientdict.pickle","wb")
     pickle.dump(ancientdict, dict_out)
@@ -169,6 +280,64 @@ def backupmemos(): #export dictionary to pickle backup file
     memo_out = open("memos.pickle","wb")
     pickle.dump(memo, memo_out)
     memo_out.close()
+
+def backupscores(): #export dictionary to pickle backup file
+    score_out = open("scores.pickle","wb")
+    pickle.dump(scores, score_out)
+    score_out.close()
+
+def updatescore(args, points):
+    global scores
+    rnkchg = rankchange(args["role"], 2)
+    uname = str(args["user"])
+    if uname in scores:
+        scores[uname] = [x + y for x, y in zip(scores[uname],[points.dics,points.trns,points.eggs])]
+    else:
+        scores[uname] = [points.dics,points.trns,points.eggs]
+    backupscores()
+    if scores[uname][0] >= scorelims[0]:
+        curroles = args["role"]
+        num_roles = len(curroles)
+        cntr = 0
+        rnkchg.fin = 0
+        for item in curroles:
+            curole  = str(item)
+            cntr += 1
+            if rnkchg.fin == 0:
+                if curole == role1:
+                    rnkchg.fin = 1
+                elif cntr == num_roles:
+                    rnkchg.id1 = rank1
+                    rnkchg.rem = 0
+    if scores[uname][1] >= scorelims[1]:
+        curroles = args["role"]
+        num_roles = len(curroles)
+        cntr = 0
+        rnkchg.fin = 0
+        for item in curroles:
+            curole  = str(item)
+            cntr += 1
+            if rnkchg.fin == 0:
+                if curole == role2:
+                    rnkchg.fin = 1
+                elif cntr == num_roles:
+                    rnkchg.id1 = rank2
+                    rnkchg.rem = 0
+    if scores[uname][2] >= scorelims[2]:
+        curroles = args["role"]
+        num_roles = len(curroles)
+        cntr = 0
+        rnkchg.fin = 0
+        for item in curroles:
+            curole  = str(item)
+            cntr += 1
+            if rnkchg.fin == 0:
+                if curole == role3:
+                    rnkchg.fin = 1
+                elif cntr == num_roles:
+                    rnkchg.id1 = rank3
+                    rnkchg.rem = 0
+    return rnkchg
 
 def csvexp(all = 0):
     holder = []
@@ -190,15 +359,6 @@ def csvexp(all = 0):
                 writer.writerows(holder)
         except IOError:
             print("I/O error")
-
-class impdata:
-    def __init__(self):
-        self.ata = 0
-        self.refloc = ""
-        self.repl = 0
-        self.str1 = "no message"
-        self.str2 = ""
-        self.x = 0
 
 def csvimp(impdat):
     # print([impdat.ata,impdat.refloc,impdat.repl])
@@ -226,10 +386,13 @@ def csvimp(impdat):
                         else:
                             errchk = 1
                             impdat.str1 = "Format Error: " + str(len(hdrs)) + " columns in file"
+                            impdat.err = 1
                 except:
                     impdat.str1 = "File Import Error"
+                    impdat.err = 1
             except:
                 impdat.str1 = "File Download Error"
+                impdat.err = 1
             if errchk == 0:
                 if impdat.repl == 1:
                     for key in tmpdict:
@@ -244,6 +407,7 @@ def csvimp(impdat):
                     impdat.str1 = "Import Complete: " + str(cnt) + " records added."
         else:
             impdat.str1 = "Invalid file type detected. Please use a .csv file"
+            impdat.err = 1
     else:
         ancientdict = None
         ancientdict = {}
@@ -257,11 +421,6 @@ def csvimp(impdat):
             print("I/O error")
     backuprecords()
     return impdat
-
-class getkey:
-    def __init__(self):
-        self.key = -1
-        self.mlt = 0
 
 def get_key(val): #find key in dictionary from one of the values in its list\
     rkey = getkey()
@@ -300,28 +459,6 @@ def drawanc(str, wht = 0): #converts string into ancient.png image
     d.text((0,0), str, font=fnt, fill=(pxc,pxc,pxc))
     imgc = trim(img)
     imgc.save("ancient.png", "PNG")
-
-class transout:
-    def __init__(self): 
-        self.str1 = ""
-        self.str2 = ""
-        self.x = 0
-
-class sixoutcl:
-    def __init__(self): 
-        self.str1 = ""
-        self.str2 = ""
-        self.str3 = ""
-        self.x = 0
-        self.var = 0 
-
-class dictoutcl:
-    def __init__(self):
-        self.chn = 0
-        self.str1 = ""
-        self.str2 = ""
-        self.str3 = ""
-        self.x = 0
 
 def exctm(wrd):
     nwst = wrd
@@ -396,6 +533,37 @@ def excta(wrd):
     rtn = nwst
     return rtn
 
+def diceroll(strg):
+    try:
+        splitl = strg.lower().split()
+        chnks = re.split("d", splitl[1])
+        sides = int(chnks[1].split(".")[0])
+        dice = int(chnks[0].split(".")[0])
+        roll = 0
+        fail = 0
+        crit = 0
+        for j in range(dice):
+            roll += random.randint(1,sides)
+            if dice == 1 and sides == 20:
+                if roll == 1:
+                    fail = 1
+                elif roll == 20:
+                    crit = 1
+        if len(splitl) == 3:
+            roll += int(splitl[2].split(".")[0])
+    except:
+        return "error"
+    if fail == 1:
+        fails = ["drop your weapon.","go blind for 1 hour.","lose 12 hp.","trip and fall prone.","have been pwned by a grue.","alert the guards."]
+        strng = "You have critically failed mistress; you " + random.choice(fails)
+    elif crit == 1:
+        crits = ["deal double damage.","trip your opponent.","suddenly feel as though you are paralized and a group of nerdy giants is looming over you.","seduce the dragon.","catch the arrow.","identify the gazebo."]
+        strng = "A critical success mistress; you " + random.choice(crits)
+    else:
+        strng = str(roll)
+    return strng
+
+# Major User command functions
 def translate(args, wht = 0): #function to control translation for shorthand command
     trans = transout()
     split_argsl = args["content"][1:].lower().split()
@@ -507,6 +675,7 @@ def translate(args, wht = 0): #function to control translation for shorthand com
                     else:
                         drawanc(missdraw, wht)
                         if nope == 1:
+                            drawanc(split_args, wht)
                             trans.str1 = "I am sorry mistress, I am not familiar with any of those words. Please be sure you intended to enter..."
                         elif len(missing) != 1:
                             trans.str1 = "I was able to translate some of the phrase as; \"" + mphrase + "\". However, I have no records for the following " + str(len(missing)) + " words..."
@@ -647,8 +816,6 @@ def translate(args, wht = 0): #function to control translation for shorthand com
         trans.str1 = "Mistress, I need to know *what* you want to translate..."
     return trans
 
-
-# str(message.author.display_name)
 def six_call(args): #interaction with Six, both comedic and for translation
     global memo
     uname = str(args["user"])
@@ -1062,7 +1229,7 @@ def updatedict(args): #function to edit a dictionary entry
         dictout.str1 = "Translation updates are only accepted in the archive channel."
     return dictout
 
-def censordict(args): #function to remove a dictionary entry
+def censordict(args): #function to remove a dictionary entry9
     global ancientdict
     dictout = dictoutcl()
     split_argsl = args["content"][1:].lower().split()
