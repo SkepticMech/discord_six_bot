@@ -1008,11 +1008,11 @@ def six_call(args): #interaction with Six, both comedic and for translation
                 sixout.str1 = "A scan *for what*, mistress?"
             elif split_argsl[3] == "for" and len(split_argsl) > 4:
                 sixout.x = 3
-                focus = " ".join(split_argst[4:])
+                focus = excta(" ".join(split_argst[4:]))
                 sixout.str1 = "Please wait while I scan the area for " + focus + "..."
                 sixout.str2 = "..."
                 direc = ["north","northwest","northeast","south","southwest","southeast","west","east"]
-                findarray = ["...I could not locate any " + focus + " in range, mistress."]*2 + ["...I believe there is " + focus + " to the " + random.choice(direc) + ", mistress."]
+                findarray = ["...I could not locate any sign of " + focus + " in range, mistress."] + ["...I believe I have detected " + focus + " to the " + random.choice(direc) + ", mistress."]
                 sixout.str3 = random.choice(findarray)
             else:
                 sixout.str1 = "A scan for *what*, mistress?"
