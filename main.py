@@ -709,7 +709,7 @@ def translate(args, wht = 0): #function to control translation for shorthand com
                         trans.str1 ="I believe \"" + split_args + "\", or..."
                         trans.str2 = "...translates as \"" + get_key(split_args).key + "\"."
                 else:
-                    trans.str1 = "I am sorry mistress, I am afraid I am not familiar with aspect of the ancient language."
+                    trans.str1 = "I am sorry mistress, I am afraid I am not familiar with that aspect of the ancient language."
         elif cmd == "tatmf" or cmd == "tatmfw": #for ancient symbols
             if len(split_argst) > 2:
                 words = split_argst[1:]
@@ -811,7 +811,7 @@ def translate(args, wht = 0): #function to control translation for shorthand com
                             trans.str1 ="I believe \"" + split_args + "\", or..."
                             trans.str2 = "...translates as \"" + tkeys + "\"."
                 else:
-                    trans.str1 = "I am sorry mistress, I am afraid I am not familiar with aspect of the ancient language."
+                    trans.str1 = "I am sorry mistress, I am afraid I am not familiar with that aspect of the ancient language."
     else:
         trans.str1 = "Mistress, I need to know *what* you want to translate..."
     return trans
