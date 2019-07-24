@@ -1262,6 +1262,3 @@ scheduler.add_job(func=csvexp, trigger="interval", hours=1)
 scheduler.start()
 # Shut down the scheduler when exiting the app
 atexit.register(lambda: scheduler.shutdown())
-
-# client.run("NTY5Mzk4OTE0NjQ2NTQwMzIz.XLwEhQ.Dw8US4osHL5FPSf6PN6YYoovGvs") #SHOP
-client.run("NTY5MzgxOTk4NDMxNTY3ODcy.XLv0fA.U6UVquCagOzgl4eXkwi5cB05YMU") #LANG CLUB
