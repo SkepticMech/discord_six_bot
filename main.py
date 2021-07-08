@@ -702,7 +702,7 @@ def translate(args, wht = 0): #function to control translation for shorthand com
                         else:
                             trans.x = 2
                             trans.str1 ="I believe..."
-                            trans.str2 = "...or \"" + ancientdict[get_key(split_args).key][1] + "\", translates as \"" + get_key(split_args) + "\"."
+                            trans.str2 = "...or \"" + ancientdict[get_key(split_args).key][1] + "\", translates as \"" + get_key(split_args).key + "\"."
                     else: #words
                         drawanc(ancientdict[get_key(split_args).key][0], wht)
                         trans.x = 2
@@ -1135,7 +1135,7 @@ def six_call(args): #interaction with Six, both comedic and for translation
     return sixout
 
 def enkei_call(args): #purely comedic interaction with Enkei
-    insultarray = ["pauper","imbicile","Elborethian rat","child"]
+    insultarray = ["pauper","imbecile","Elborethian rat","child"]
     lc_mess = args["content"].lower()
     if (lc_mess.find("do a scan") != -1):
         reply =  "I am not your slave, " + random.choice(insultarray) + "."
@@ -1262,3 +1262,5 @@ scheduler.add_job(func=csvexp, trigger="interval", hours=1)
 scheduler.start()
 # Shut down the scheduler when exiting the app
 atexit.register(lambda: scheduler.shutdown())
+
+client.run("serverkey") #Put Your Server Key Here
